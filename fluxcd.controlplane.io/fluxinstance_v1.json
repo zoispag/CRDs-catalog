@@ -24,7 +24,13 @@
               "type": "string"
             },
             "multitenant": {
-              "description": "Multitenant enables the multitenancy lockdown.",
+              "default": false,
+              "description": "Multitenant enables the multitenancy lockdown. Defaults to false.",
+              "type": "boolean"
+            },
+            "multitenantWorkloadIdentity": {
+              "default": false,
+              "description": "MultitenantWorkloadIdentity enables the multitenancy lockdown for\nworkload identity. Defaults to false.",
               "type": "boolean"
             },
             "networkPolicy": {
@@ -32,8 +38,29 @@
               "description": "NetworkPolicy restricts network access to the current namespace.\nDefaults to true.",
               "type": "boolean"
             },
+            "objectLevelWorkloadIdentity": {
+              "description": "ObjectLevelWorkloadIdentity enables the feature gate\nrequired for object-level workload identity.\nThis feature is only available in Flux v2.6.0 and later.",
+              "type": "boolean"
+            },
+            "size": {
+              "description": "Size defines the vertical scaling profile of the Flux controllers.\nThe size is used to determine the concurrency and CPU/Memory limits for the Flux controllers.\nAccepted values are: 'small', 'medium' and 'large'.",
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            "tenantDefaultDecryptionServiceAccount": {
+              "description": "TenantDefaultDecryptionServiceAccount is the name of the service account\nto use as default for kustomize-controller SOPS decryption when the\nmultitenant lockdown for workload identity is enabled. Defaults to the\n'default' service account from the tenant namespace.",
+              "type": "string"
+            },
+            "tenantDefaultKubeConfigServiceAccount": {
+              "description": "TenantDefaultKubeConfigServiceAccount is the name of the service account\nto use as default for kustomize-controller and helm-controller remote\ncluster access via spec.kubeConfig.configMapRef when the multitenant\nlockdown for workload identity is enabled. Defaults to the 'default'\nservice account from the tenant namespace.",
+              "type": "string"
+            },
             "tenantDefaultServiceAccount": {
-              "description": "TenantDefaultServiceAccount is the name of the service account\nto use as default when the multitenant lockdown is enabled.\nDefaults to the 'default' service account from the tenant namespace.",
+              "description": "TenantDefaultServiceAccount is the name of the service account\nto use as default when the multitenant lockdown is enabled, for\nkustomize-controller and helm-controller.\nThis field will also be used for multitenant workload identity\nlockdown for source-controller, notification-controller,\nimage-reflector-controller and image-automation-controller.\nDefaults to the 'default' service account from the tenant namespace.",
               "type": "string"
             },
             "type": {
@@ -49,11 +76,13 @@
               "type": "string"
             }
           },
-          "required": [
-            "domain",
-            "networkPolicy"
-          ],
           "type": "object",
+          "x-kubernetes-validations": [
+            {
+              "message": ".objectLevelWorkloadIdentity must be set to true when .multitenantWorkloadIdentity is set to true",
+              "rule": "(has(self.objectLevelWorkloadIdentity) && self.objectLevelWorkloadIdentity) || !has(self.multitenantWorkloadIdentity) || !self.multitenantWorkloadIdentity"
+            }
+          ],
           "additionalProperties": false
         },
         "commonMetadata": {
@@ -78,7 +107,7 @@
           "additionalProperties": false
         },
         "components": {
-          "description": "Components is the list of controllers to install.\nDefaults to all controllers.",
+          "description": "Components is the list of controllers to install.\nDefaults to a commonly used subset.",
           "items": {
             "description": "Component is the name of a controller to install.",
             "enum": [
@@ -87,7 +116,8 @@
               "helm-controller",
               "notification-controller",
               "image-reflector-controller",
-              "image-automation-controller"
+              "image-automation-controller",
+              "source-watcher"
             ],
             "type": "string"
           },
@@ -111,6 +141,15 @@
             },
             "registry": {
               "description": "Registry address to pull the distribution images from\ne.g. 'ghcr.io/fluxcd'.",
+              "type": "string"
+            },
+            "variant": {
+              "description": "Variant specifies the Flux distribution flavor stored\nin the registry.",
+              "enum": [
+                "upstream-alpine",
+                "enterprise-alpine",
+                "enterprise-distroless"
+              ],
               "type": "string"
             },
             "version": {
@@ -205,6 +244,14 @@
               },
               "minItems": 1,
               "type": "array"
+            },
+            "storage": {
+              "description": "Storage defines if the source-controller shards\nshould use an emptyDir or a persistent volume claim for storage.\nAccepted values are 'ephemeral' or 'persistent', defaults to 'ephemeral'.\nFor 'persistent' to take effect, the '.spec.storage' field must be set.",
+              "enum": [
+                "ephemeral",
+                "persistent"
+              ],
+              "type": "string"
             }
           },
           "required": [
@@ -263,6 +310,17 @@
             },
             "path": {
               "description": "Path is the path to the source directory containing\nthe kustomize overlay or plain Kubernetes manifests.",
+              "type": "string"
+            },
+            "provider": {
+              "description": "Provider specifies OIDC provider for source authentication.\nFor OCIRepository and Bucket the provider can be set to 'aws', 'azure' or 'gcp'.\nfor GitRepository the accepted value can be set to 'azure' or 'github'.\nTo disable OIDC authentication the provider can be set to 'generic' or left empty.",
+              "enum": [
+                "generic",
+                "aws",
+                "azure",
+                "gcp",
+                "github"
+              ],
               "type": "string"
             },
             "pullSecret": {
@@ -390,6 +448,59 @@
           },
           "type": "array"
         },
+        "history": {
+          "description": "History contains the reconciliation history of the FluxInstance\nas a list of snapshots ordered by the last reconciled time.",
+          "items": {
+            "description": "Snapshot represents a point-in-time record of a group of resources reconciliation,\nincluding timing information, status, and a unique digest identifier.",
+            "properties": {
+              "digest": {
+                "description": "Digest is the checksum in the format `<algo>:<hex>` of the resources in this snapshot.",
+                "type": "string"
+              },
+              "firstReconciled": {
+                "description": "FirstReconciled is the time when this revision was first reconciled to the cluster.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "lastReconciled": {
+                "description": "LastReconciled is the time when this revision was last reconciled to the cluster.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "lastReconciledDuration": {
+                "description": "LastReconciledDuration is time it took to reconcile the resources in this revision.",
+                "type": "string"
+              },
+              "lastReconciledStatus": {
+                "description": "LastReconciledStatus is the status of the last reconciliation.",
+                "type": "string"
+              },
+              "metadata": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Metadata contains additional information about the snapshot.",
+                "type": "object"
+              },
+              "totalReconciliations": {
+                "description": "TotalReconciliations is the total number of reconciliations that have occurred for this snapshot.",
+                "format": "int64",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "digest",
+              "firstReconciled",
+              "lastReconciled",
+              "lastReconciledDuration",
+              "lastReconciledStatus",
+              "totalReconciliations"
+            ],
+            "type": "object",
+            "additionalProperties": false
+          },
+          "type": "array"
+        },
         "inventory": {
           "description": "Inventory contains a list of Kubernetes resource object references\nlast applied on the cluster.",
           "properties": {
@@ -435,6 +546,10 @@
           "description": "LastAttemptedRevision is the version and digest of the\ndistribution config that was last attempted to reconcile.",
           "type": "string"
         },
+        "lastHandledForceAt": {
+          "description": "LastHandledForceAt holds the value of the most recent\nforce request value, so a change of the annotation value\ncan be detected.",
+          "type": "string"
+        },
         "lastHandledReconcileAt": {
           "description": "LastHandledReconcileAt holds the value of the most recent\nreconcile request value, so a change of the annotation value\ncan be detected.",
           "type": "string"
@@ -444,5 +559,11 @@
       "additionalProperties": false
     }
   },
-  "type": "object"
+  "type": "object",
+  "x-kubernetes-validations": [
+    {
+      "message": "the only accepted name for a FluxInstance is 'flux'",
+      "rule": "self.metadata.name == 'flux'"
+    }
+  ]
 }

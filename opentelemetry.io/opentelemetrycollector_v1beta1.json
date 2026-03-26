@@ -1887,6 +1887,7 @@
             },
             "maxReplicas": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             },
             "metrics": {
@@ -2008,14 +2009,17 @@
             },
             "minReplicas": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             },
             "targetCPUUtilization": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             },
             "targetMemoryUtilization": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             }
           },
@@ -2202,6 +2206,9 @@
           },
           "type": "object",
           "additionalProperties": false
+        },
+        "dnsPolicy": {
+          "type": "string"
         },
         "env": {
           "items": {
@@ -3762,26 +3769,32 @@
           "properties": {
             "failureThreshold": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             },
             "initialDelaySeconds": {
               "format": "int32",
+              "minimum": 0,
               "type": "integer"
             },
             "periodSeconds": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             },
             "successThreshold": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             },
             "terminationGracePeriodSeconds": {
               "format": "int64",
+              "minimum": 1,
               "type": "integer"
             },
             "timeoutSeconds": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             }
           },
@@ -3805,6 +3818,15 @@
           ],
           "type": "string"
         },
+        "networkPolicy": {
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        },
         "nodeSelector": {
           "additionalProperties": {
             "type": "string"
@@ -3820,10 +3842,28 @@
                 },
                 "enableMetrics": {
                   "type": "boolean"
+                },
+                "extraLabels": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
                 }
               },
               "type": "object",
               "additionalProperties": false
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
+        },
+        "persistentVolumeClaimRetentionPolicy": {
+          "properties": {
+            "whenDeleted": {
+              "type": "string"
+            },
+            "whenScaled": {
+              "type": "string"
             }
           },
           "type": "object",
@@ -3934,6 +3974,9 @@
               "format": "int64",
               "type": "integer"
             },
+            "seLinuxChangePolicy": {
+              "type": "string"
+            },
             "seLinuxOptions": {
               "properties": {
                 "level": {
@@ -4028,6 +4071,8 @@
               },
               "hostPort": {
                 "format": "int32",
+                "maximum": 65535,
+                "minimum": 0,
                 "type": "integer"
               },
               "name": {
@@ -4073,26 +4118,32 @@
           "properties": {
             "failureThreshold": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             },
             "initialDelaySeconds": {
               "format": "int32",
+              "minimum": 0,
               "type": "integer"
             },
             "periodSeconds": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             },
             "successThreshold": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             },
             "terminationGracePeriodSeconds": {
               "format": "int64",
+              "minimum": 1,
               "type": "integer"
             },
             "timeoutSeconds": {
               "format": "int32",
+              "minimum": 1,
               "type": "integer"
             }
           },
@@ -4100,6 +4151,7 @@
           "additionalProperties": false
         },
         "replicas": {
+          "default": 1,
           "format": "int32",
           "type": "integer"
         },
@@ -4279,8 +4331,47 @@
         "serviceAccount": {
           "type": "string"
         },
+        "serviceName": {
+          "type": "string"
+        },
         "shareProcessNamespace": {
           "type": "boolean"
+        },
+        "startupProbe": {
+          "properties": {
+            "failureThreshold": {
+              "format": "int32",
+              "minimum": 1,
+              "type": "integer"
+            },
+            "initialDelaySeconds": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "periodSeconds": {
+              "format": "int32",
+              "minimum": 1,
+              "type": "integer"
+            },
+            "successThreshold": {
+              "format": "int32",
+              "minimum": 1,
+              "type": "integer"
+            },
+            "terminationGracePeriodSeconds": {
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            },
+            "timeoutSeconds": {
+              "format": "int32",
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "type": "object",
+          "additionalProperties": false
         },
         "targetAllocator": {
           "properties": {
@@ -4967,6 +5058,16 @@
               ],
               "type": "string"
             },
+            "collectorNotReadyGracePeriod": {
+              "default": "30s",
+              "format": "duration",
+              "type": "string"
+            },
+            "collectorTargetReloadInterval": {
+              "default": "30s",
+              "format": "duration",
+              "type": "string"
+            },
             "enabled": {
               "type": "boolean"
             },
@@ -5104,6 +5205,12 @@
                     },
                     "enableMetrics": {
                       "type": "boolean"
+                    },
+                    "extraLabels": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object",
@@ -5175,6 +5282,9 @@
                 "runAsUser": {
                   "format": "int64",
                   "type": "integer"
+                },
+                "seLinuxChangePolicy": {
+                  "type": "string"
                 },
                 "seLinuxOptions": {
                   "properties": {
@@ -5264,10 +5374,102 @@
             },
             "prometheusCR": {
               "properties": {
+                "allowNamespaces": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "denyNamespaces": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
                 "enabled": {
                   "type": "boolean"
                 },
                 "podMonitorSelector": {
+                  "properties": {
+                    "matchExpressions": {
+                      "items": {
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string"
+                          },
+                          "values": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array",
+                            "x-kubernetes-list-type": "atomic"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "operator"
+                        ],
+                        "type": "object",
+                        "additionalProperties": false
+                      },
+                      "type": "array",
+                      "x-kubernetes-list-type": "atomic"
+                    },
+                    "matchLabels": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object",
+                  "x-kubernetes-map-type": "atomic",
+                  "additionalProperties": false
+                },
+                "probeSelector": {
+                  "properties": {
+                    "matchExpressions": {
+                      "items": {
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string"
+                          },
+                          "values": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array",
+                            "x-kubernetes-list-type": "atomic"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "operator"
+                        ],
+                        "type": "object",
+                        "additionalProperties": false
+                      },
+                      "type": "array",
+                      "x-kubernetes-list-type": "atomic"
+                    },
+                    "matchLabels": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object",
+                  "x-kubernetes-map-type": "atomic",
+                  "additionalProperties": false
+                },
+                "scrapeConfigSelector": {
                   "properties": {
                     "matchExpressions": {
                       "items": {
@@ -5755,6 +5957,9 @@
             "additionalProperties": false
           },
           "type": "array"
+        },
+        "trafficDistribution": {
+          "type": "string"
         },
         "upgradeStrategy": {
           "enum": [
@@ -7367,6 +7572,24 @@
         "config"
       ],
       "type": "object",
+      "x-kubernetes-validations": [
+        {
+          "message": "the OpenTelemetry Collector mode is set to sidecar, which does not support the attribute 'tolerations'",
+          "rule": "!(self.mode == 'sidecar' && size(self.tolerations) > 0) || !has(self.tolerations)"
+        },
+        {
+          "message": "the OpenTelemetry Collector mode is set to sidecar, which does not support the attribute 'priorityClassName'",
+          "rule": "!(self.mode == 'sidecar' && self.priorityClassName != '') || !has(self.priorityClassName)"
+        },
+        {
+          "message": "the OpenTelemetry Collector mode is set to sidecar, which does not support the attribute 'affinity'",
+          "rule": "!(self.mode == 'sidecar' && self.affinity != null) || !has(self.affinity)"
+        },
+        {
+          "message": "the OpenTelemetry Collector mode is set to sidecar, which does not support the attribute 'additionalContainers'",
+          "rule": "!(self.mode == 'sidecar' && size(self.additionalContainers) > 0) || !has(self.additionalContainers)"
+        }
+      ],
       "additionalProperties": false
     },
     "status": {
